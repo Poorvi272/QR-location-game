@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Validation</title>
+</head>
+<body>
+    <h1>Scan Validation</h1>
+    <p>Ensure you're at the correct location to access the next hint!</p>
+    
+    <button id="checkLocation">Check Location</button>
+    <div id="form" style="display: none;">
+        <h2>Next Step</h2>
+        <form action="#" method="POST">
+            <input type="text" name="team" placeholder="Enter Team Name">
+            <button type="submit">Get Next Hint</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("checkLocation").addEventListener("click", () => {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+
+                // Predefined QR location
+                const qrLat = 19.1334; // Example Latitude
+                const qrLng = 72.9134; // Example Longitude
+                const threshold = 0.0005; // Allowable range (~50m)
+
+                if (Math.abs(userLat - qrLat) <= threshold && Math.abs(userLng - qrLng) <= threshold) {
+                    // Location matched
+                    document.getElementById("form").style.display = "block";
+                } else {
+                    // Location mismatch
+                    alert("You are not at the correct location!");
+                }
+            }, (error) => {
+                alert("Location access is required!");
+            });
+        });
+    </script>
+</body>
+</html>
