@@ -3,43 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Location Validation</title>
+    <title>Location-Based Hint</title>
 </head>
-<body>
-    <h1>Scan Validation</h1>
-    <p>Ensure you're at the correct location to access the next hint!</p>
-    
-    <button id="checkLocation">Check Location</button>
-    <div id="form" style="display: none;">
-        <h2>Next Step</h2>
-        <form action="#" method="POST">
-            <input type="text" name="team" placeholder="Enter Team Name">
-            <button type="submit">Get Next Hint</button>
-        </form>
-    </div>
+<body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+    <h1>Scan the QR Code to Get Your Hint</h1>
+    <p id="status">Checking your location...</p>
+    <p id="hint" style="font-weight: bold; font-size: 20px;"></p>
 
     <script>
-        document.getElementById("checkLocation").addEventListener("click", () => {
-            navigator.geolocation.getCurrentPosition((position) => {
-                const userLat = position.coords.latitude;
-                const userLng = position.coords.longitude;
+        // Predefined locations with latitude, longitude, and hints
+        const locations = {
+            location1: { lat: 26.853501789520344, lng: 75.79583874217175, hint: "Look under the big tree near the fountain!" },
+            location2: { lat: 28.704060, lng: 77.102493, hint: "Check near the park bench." },
+            location3: { lat: 27.176670, lng: 78.008072, hint: "Explore the shaded gazebo." },
+            location4: { lat: 19.076090, lng: 72.877426, hint: "It's near the golden statue." },
+            location5: { lat: 13.082680, lng: 80.270721, hint: "Search by the flower garden." },
+            location6: { lat: 12.971598, lng: 77.594566, hint: "It's hidden behind the water tank." },
+            location7: { lat: 22.572645, lng: 88.363892, hint: "Find it near the old banyan tree." },
+            location8: { lat: 15.299326, lng: 74.123993, hint: "Look by the sandy beach entrance." },
+            location9: { lat: 23.259933, lng: 77.412613, hint: "Check behind the ancient ruins." },
+            location10: { lat: 21.145800, lng: 79.088158, hint: "Search around the lake's edge." }
+        };
 
-                // Predefined QR location
-                const qrLat = 19.1334; // Example Latitude
-                const qrLng = 72.9134; // Example Longitude
-                const threshold = 0.0005; // Allowable range (~50m)
+        const thresholdDistance = 0.05; // Distance threshold in kilometers (50 meters)
 
-                if (Math.abs(userLat - qrLat) <= threshold && Math.abs(userLng - qrLng) <= threshold) {
-                    // Location matched
-                    document.getElementById("form").style.display = "block";
-                } else {
-                    // Location mismatch
-                    alert("You are not at the correct location!");
-                }
-            }, (error) => {
-                alert("Location access is required!");
-            });
-        });
+        // Function to calculate the distance between two coordinates
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const toRad = (value) => (value * Math.PI) / 180;
+            const R = 6371; // Earth's radius in kilometers
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distance in kilometers
+        }
+
+        // Extract locationId from URL query parameters
+        const params = new URLSearchParams(window.location.search);
+        const locationId = params.get('locationId');
+
+        if (!locationId || !locations[locationId]) {
+            document.getElementById("status").innerText = "Invalid or missing location ID.";
+        } else {
+            const targetLocation = locations[locationId];
+
+            // Check the user's location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLatitude = position.coords.latitude;
+                        const userLongitude = position.coords.longitude;
+                        const distance = getDistance(userLatitude, userLongitude, targetLocation.lat, targetLocation.lng);
+
+                        if (distance <= thresholdDistance) {
+                            document.getElementById("status").innerText = "Location matched!";
+                            document.getElementById("hint").innerText = 🎉 Your hint: ${targetLocation.hint};
+                        } else {
+                            document.getElementById("status").innerText = "Location mismatch!";
+                            document.getElementById("hint").innerText = "❌ You are not at the correct location. Please try again.";
+                        }
+                    },
+                    (error) => {
+                        document.getElementById("status").innerText = "Unable to get your location. Please enable GPS and try again.";
+                    }
+                );
+            } else {
+                document.getElementById("status").innerText = "Geolocation is not supported by your browser.";
+            }
+        }
     </script>
 </body>
 </html>
